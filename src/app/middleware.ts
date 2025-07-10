@@ -1,6 +1,7 @@
 // /src/app/middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { PROTECTED_PATHS } from '@/constants/protected-routes'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
@@ -26,15 +27,17 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const protectedRoutes = req.nextUrl.pathname.startsWith('/(protected)')
+  const isProtected = PROTECTED_PATHS.some((path) =>
+    req.nextUrl.pathname.startsWith(path)
+  );
 
-  if (protectedRoutes && !session) {
-    return NextResponse.redirect(new URL('/(auth)/login', req.url))
+  if (isProtected && !session) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  return res
+  return res;
 }
 
 export const config = {
-  matcher: ['/((protected)*)'], // middleware only runs on /protected/*
+  matcher: PROTECTED_PATHS // middleware only runs on /protected/*
 }
